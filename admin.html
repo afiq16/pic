@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aura Vault — Admin Intelligence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05070f;
+      --card: rgba(13,18,30,0.8);
+      --glass: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.1);
+      --violet: #8b5cf6;
+      --cyan: #06b6d4;
+      --rose: #f43f5e;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --r-sm: 8px;
+      --r-md: 14px;
+      --r-lg: 22px;
+      --r-full: 9999px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background */
+    .bg-glow { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.35; }
+    .g1 { width: 500px; height: 500px; background: radial-gradient(circle, var(--violet), transparent 70%); top: -150px; left: -150px; animation: pulse 8s infinite alternate; }
+    .g2 { width: 450px; height: 450px; background: radial-gradient(circle, var(--cyan), transparent 70%); bottom: -150px; right: -150px; animation: pulse 8s 3s infinite alternate; }
+    @keyframes pulse { from { opacity: 0.2; } to { opacity: 0.45; } }
+
+    /* Auth Gate */
+    #admin-auth {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(5,7,15,0.95);
+      backdrop-filter: blur(30px);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .auth-box {
+      background: rgba(13,18,30,0.9);
+      border: 1px solid rgba(139,92,246,0.4);
+      border-radius: var(--r-lg);
+      padding: 40px 32px;
+      max-width: 420px; width: 100%;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(139,92,246,0.2);
+      animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes popIn { from { opacity:0; transform: scale(0.9) translateY(20px); } to { opacity:1; transform: scale(1) translateY(0); } }
+    .auth-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(6,182,212,0.3));
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+      font-size: 2rem; box-shadow: 0 0 25px rgba(139,92,246,0.4);
+    }
+    .auth-box h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff, var(--cyan), var(--violet));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .auth-box p { color: var(--muted); font-size: 0.85rem; margin-bottom: 24px; }
+    .auth-input {
+      width: 100%; padding: 14px 16px; border-radius: var(--r-md);
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: var(--text); font-size: 1rem; font-family: 'Outfit',sans-serif;
+      outline: none; margin-bottom: 12px; text-align: center; letter-spacing: 4px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .auth-input:focus { border-color: var(--violet); box-shadow: 0 0 15px rgba(139,92,246,0.3); }
+    .btn-login {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      border: none; border-radius: var(--r-full);
+      color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer;
+      font-family: 'Outfit',sans-serif; letter-spacing: 0.5px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,92,246,0.4); }
+    .auth-error { color: var(--rose); font-size: 0.85rem; margin-top: 10px; display: none; }
+    .auth-hint { color: var(--dim); font-size: 0.75rem; margin-top: 14px; }
+
+    /* Dashboard */
+    #dashboard { display: none; position: relative; z-index: 10; }
+
+    /* Header */
+    .dash-header {
+      background: rgba(5,7,15,0.8); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 100;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { width: 42px; height: 42px; border-radius: var(--r-md);
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; box-shadow: 0 0 16px rgba(139,92,246,0.5);
+    }
+    .brand-text { font-size: 1.1rem; font-weight: 800; letter-spacing: 1px; }
+    .brand-sub { font-size: 0.72rem; color: var(--emerald); font-weight: 500; }
+    .btn-logout {
+      background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3);
+      color: var(--rose); padding: 8px 16px; border-radius: var(--r-full);
+      cursor: pointer; font-size: 0.85rem; font-family: 'Outfit',sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(244,63,94,0.3); }
+
+    /* Main */
+    .dash-main { max-width: 1200px; margin: 0 auto; padding: 28px; }
+
+    /* Stats Row */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: rgba(13,18,30,0.7); border-radius: var(--r-md);
+      border: 1px solid var(--border); padding: 20px;
+      backdrop-filter: blur(20px);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); border-color: rgba(139,92,246,0.4); }
+    .stat-icon { font-size: 1.8rem; margin-bottom: 10px; }
+    .stat-label { color: var(--muted); font-size: 0.78rem; font-weight: 500; margin-bottom: 4px; }
+    .stat-value { font-size: 2rem; font-weight: 800; }
+
+    /* Section */
+    .section-title {
+      font-size: 1rem; font-weight: 700; color: var(--cyan);
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+    }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .btn-sm {
+      padding: 6px 14px; border-radius: var(--r-full); font-size: 0.78rem;
+      font-family: 'Outfit',sans-serif; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-danger-sm {
+      background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3); color: var(--rose);
+    }
+    .btn-danger-sm:hover { background: rgba(244,63,94,0.3); }
+    .btn-refresh-sm {
+      background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3); color: var(--cyan);
+    }
+    .btn-refresh-sm:hover { background: rgba(6,182,212,0.3); }
+
+    /* Log Cards */
+    .log-list { display: flex; flex-direction: column; gap: 10px; }
+    .log-card {
+      background: rgba(255,255,255,0.03); border-radius: var(--r-md);
+      border: 1px solid rgba(255,255,255,0.07);
+      padding: 14px 16px; animation: fadeUp 0.3s ease;
+      transition: border-color 0.2s;
+    }
+    .log-card:hover { border-color: rgba(255,255,255,0.15); }
+    @keyframes fadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .log-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .log-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--r-full); font-size: 0.78rem; font-weight: 600; }
+    .log-time { color: var(--dim); font-size: 0.78rem; }
+    .log-device { color: var(--text); font-size: 0.85rem; margin-bottom: 4px; }
+    .log-location { color: var(--muted); font-size: 0.82rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .log-ip { color: var(--cyan); font-family: 'Inter', monospace; font-size: 0.78rem; background: rgba(6,182,212,0.1); padding: 2px 8px; border-radius: 4px; }
+    .log-msg { color: var(--dim); font-size: 0.78rem; margin-top: 6px; font-style: italic; }
+
+    .empty-state { text-align: center; padding: 50px 20px; color: var(--dim); }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* Filter Bar */
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filter-pill {
+      padding: 5px 14px; border-radius: var(--r-full); font-size: 0.8rem;
+      border: 1px solid var(--border); background: var(--glass); color: var(--muted);
+      cursor: pointer; transition: all 0.2s; font-family: 'Outfit',sans-serif;
+    }
+    .filter-pill.active, .filter-pill:hover {
+      background: rgba(6,182,212,0.2); border-color: var(--cyan); color: var(--text);
+    }
+
+    /* Divider */
+    hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .dash-header { padding: 12px 16px; }
+      .dash-main { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background Glows -->
+<div class="bg-glow g1"></div>
+<div class="bg-glow g2"></div>
+
+<!-- ======= AUTH GATE ======= -->
+<div id="admin-auth">
+  <div class="auth-box">
+    <div class="auth-icon">🛡️</div>
+    <h1>AURA ADMIN</h1>
+    <p>Enter the Admin Master Password to access the Intelligence Dashboard</p>
+    <input type="password" id="admin-pass-input" class="auth-input" placeholder="••••••••" maxlength="32" autocomplete="off" />
+    <button class="btn-login" id="btn-admin-login">Access Dashboard →</button>
+    <div class="auth-error" id="auth-error-msg">❌ Incorrect password. Try again.</div>
+    <p class="auth-hint">Default password: <strong>aura2026</strong> (change in code)</p>
+  </div>
+</div>
+
+<!-- ======= DASHBOARD ======= -->
+<div id="dashboard">
+  <!-- Header -->
+  <div class="dash-header">
+    <div class="brand">
+      <div class="brand-icon">🔐</div>
+      <div>
+        <div class="brand-text">AURA VAULT</div>
+        <div class="brand-sub">⚡ Admin Intelligence Dashboard</div>
+      </div>
+    </div>
+    <button class="btn-logout" id="btn-logout">🚪 Logout</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dash-main">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📸</div>
+        <div class="stat-label">Total Memories</div>
+        <div class="stat-value" id="stat-total" style="color: var(--violet);">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-label">Secret Notes</div>
+        <div class="stat-value" id="stat-notes" style="color: var(--cyan);">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💾</div>
+        <div class="stat-label">Storage Used</div>
+        <div class="stat-value" id="stat-size" style="color: var(--emerald); font-size: 1.4rem;">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-label">Access Events</div>
+        <div class="stat-value" id="stat-logs" style="color: var(--amber);">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🚨</div>
+        <div class="stat-label">Failed Attempts</div>
+        <div class="stat-value" id="stat-failed" style="color: var(--rose);">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔓</div>
+        <div class="stat-label">Successful Unlocks</div>
+        <div class="stat-value" id="stat-unlocks" style="color: var(--emerald);">—</div>
+      </div>
+    </div>
+
+    <hr />
+
+    <!-- Access Log -->
+    <div class="section-header">
+      <div class="section-title">🛰️ Access Intelligence Log</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-sm btn-refresh-sm" id="btn-refresh">🔄 Refresh</button>
+        <button class="btn-sm btn-danger-sm" id="btn-clear-all">🗑️ Clear Logs</button>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-pill active" data-filter="ALL">All Events</button>
+      <button class="filter-pill" data-filter="VAULT_UNLOCKED">🔓 Unlocked</button>
+      <button class="filter-pill" data-filter="FAILED_UNLOCK">🚫 Failed</button>
+      <button class="filter-pill" data-filter="DECOY_MODE_ACTIVATED">🎭 Decoy</button>
+      <button class="filter-pill" data-filter="SESSION_TIMEOUT">⏱️ Timeout</button>
+      <button class="filter-pill" data-filter="MEDIA_UPLOADED">📤 Upload</button>
+    </div>
+
+    <!-- Log Container -->
+    <div class="log-list" id="log-list">
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <p>Loading logs...</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ======= CONFIG =======
+  const ADMIN_PASSWORD = 'aura2026'; // Change this to your secret password
+  const DB_NAME = 'AuraVaultDB';
+  const DB_VERSION = 1;
+
+  let db = null;
+  let allLogs = [];
+  let currentFilter = 'ALL';
+
+  // ======= AUTH =======
+  document.getElementById('btn-admin-login').addEventListener('click', tryLogin);
+  document.getElementById('admin-pass-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') tryLogin();
+  });
+
+  function tryLogin() {
+    const pass = document.getElementById('admin-pass-input').value;
+    if (pass === ADMIN_PASSWORD) {
+      document.getElementById('admin-auth').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      initDB();
+    } else {
+      const errEl = document.getElementById('auth-error-msg');
+      errEl.style.display = 'block';
+      const inp = document.getElementById('admin-pass-input');
+      inp.style.borderColor = 'var(--rose)';
+      setTimeout(() => {
+        errEl.style.display = 'none';
+        inp.style.borderColor = '';
+      }, 3000);
+    }
+  }
+
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    document.getElementById('admin-auth').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('admin-pass-input').value = '';
+  });
+
+  // ======= INDEXEDDB =======
+  function initDB() {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onsuccess = e => {
+      db = e.target.result;
+      loadData();
+    };
+    req.onerror = () => {
+      document.getElementById('log-list').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <p>Could not connect to Aura Vault database.<br>Make sure the main app has been opened at least once.</p>
+        </div>`;
+    };
+  }
+
+  function loadData() {
+    loadStats();
+    loadLogs();
+  }
+
+  async function loadStats() {
+    if (!db) return;
+
+    // Photos
+    const photos = await getAll('photos');
+    const notes = photos.filter(p => !p.dataUrl).length;
+    let totalBytes = 0;
+    photos.forEach(p => { if (p.dataUrl) totalBytes += p.dataUrl.length; });
+    const sizeMB = (totalBytes * 0.75 / (1024 * 1024)).toFixed(2);
+
+    document.getElementById('stat-total').textContent = photos.length;
+    document.getElementById('stat-notes').textContent = notes;
+    document.getElementById('stat-size').textContent = sizeMB + ' MB';
+  }
+
+  async function loadLogs() {
+    if (!db) return;
+    const logs = await getAll('logs');
+    allLogs = (logs || []).reverse();
+
+    const failed = allLogs.filter(l => l.type === 'FAILED_UNLOCK').length;
+    const unlocks = allLogs.filter(l => l.type === 'VAULT_UNLOCKED').length;
+    document.getElementById('stat-logs').textContent = allLogs.length;
+    document.getElementById('stat-failed').textContent = failed;
+    document.getElementById('stat-unlocks').textContent = unlocks;
+
+    renderLogs();
+  }
+
+  function renderLogs() {
+    const container = document.getElementById('log-list');
+    let filtered = currentFilter === 'ALL' ? allLogs : allLogs.filter(l => l.type === currentFilter);
+
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No logs found for this filter.</p></div>`;
+      return;
+    }
+
+    const eventConfig = {
+      'VAULT_UNLOCKED':        { color: 'rgba(16,185,129,0.25)', border: 'rgba(16,185,129,0.5)', label: '🔓 Unlocked', badge: 'rgba(16,185,129,0.2)', text: '#10b981' },
+      'DECOY_MODE_ACTIVATED':  { color: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.5)', label: '🎭 Decoy Mode', badge: 'rgba(245,158,11,0.2)', text: '#f59e0b' },
+      'FAILED_UNLOCK':         { color: 'rgba(244,63,94,0.15)',  border: 'rgba(244,63,94,0.5)',  label: '🚫 Failed Attempt', badge: 'rgba(244,63,94,0.2)', text: '#f43f5e' },
+      'SESSION_TIMEOUT':       { color: 'rgba(6,182,212,0.1)',   border: 'rgba(6,182,212,0.4)',  label: '⏱️ Auto Lock', badge: 'rgba(6,182,212,0.15)', text: '#06b6d4' },
+      'VAULT_LOCKED':          { color: 'rgba(139,92,246,0.1)',  border: 'rgba(139,92,246,0.4)', label: '🔒 Locked', badge: 'rgba(139,92,246,0.2)', text: '#8b5cf6' },
+      'MEDIA_UPLOADED':        { color: 'rgba(6,182,212,0.1)',   border: 'rgba(6,182,212,0.3)',  label: '📤 Uploaded', badge: 'rgba(6,182,212,0.15)', text: '#06b6d4' },
+      'MEDIA_DELETED':         { color: 'rgba(244,63,94,0.1)',   border: 'rgba(244,63,94,0.3)',  label: '🗑️ Deleted', badge: 'rgba(244,63,94,0.15)', text: '#f43f5e' },
+      'VAULT_EXPORTED':        { color: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.3)', label: '💾 Exported', badge: 'rgba(245,158,11,0.15)', text: '#f59e0b' },
+      'ADMIN_SETTINGS_SAVED':  { color: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.3)', label: '⚙️ Settings', badge: 'rgba(139,92,246,0.15)', text: '#8b5cf6' },
+    };
+
+    container.innerHTML = filtered.map(log => {
+      const cfg = eventConfig[log.type] || { color:'rgba(255,255,255,0.05)', border:'rgba(255,255,255,0.15)', label:`📋 ${log.type}`, badge:'rgba(255,255,255,0.1)', text:'#94a3b8' };
+      const ts = log.timestampStr || (typeof log.timestamp === 'number' ? new Date(log.timestamp).toLocaleString() : log.timestamp);
+      const deviceLine = log.device
+        ? `${log.deviceIcon || '💻'} <strong>${log.device}</strong> &nbsp;·&nbsp; ${log.os || ''} &nbsp;·&nbsp; ${log.browser || ''} &nbsp;·&nbsp; 📺 ${log.screen || ''}`
+        : '💻 Unknown Device';
+      const locationLine = log.city
+        ? `${log.flag || '🌍'} <strong>${log.city}${log.region ? ', ' + log.region : ''}</strong> &mdash; ${log.country}`
+        : '🌍 Location unavailable';
+
+      return `
+        <div class="log-card" style="border-left: 3px solid ${cfg.border}; background: ${cfg.color};">
+          <div class="log-top">
+            <span class="log-badge" style="background:${cfg.badge}; color:${cfg.text};">${cfg.label}</span>
+            <span class="log-time">🕐 ${ts}</span>
+          </div>
+          <div class="log-device">${deviceLine}</div>
+          <div class="log-location">
+            ${locationLine}
+            ${log.ip ? `<span class="log-ip">IP: ${log.ip}</span>` : ''}
+          </div>
+          ${log.message ? `<div class="log-msg">"${log.message}"</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Filter pills
+  document.getElementById('filter-bar').addEventListener('click', e => {
+    const pill = e.target.closest('.filter-pill');
+    if (!pill) return;
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    currentFilter = pill.dataset.filter;
+    renderLogs();
+  });
+
+  document.getElementById('btn-refresh').addEventListener('click', loadData);
+
+  document.getElementById('btn-clear-all').addEventListener('click', async () => {
+    if (!confirm('Delete ALL access logs permanently?')) return;
+    if (!db) return;
+    const tx = db.transaction(['logs'], 'readwrite');
+    tx.objectStore('logs').clear();
+    tx.oncomplete = () => { allLogs = []; renderLogs(); loadStats(); };
+  });
+
+  // ======= HELPERS =======
+  function getAll(storeName) {
+    return new Promise((resolve) => {
+      if (!db || !db.objectStoreNames.contains(storeName)) return resolve([]);
+      const tx = db.transaction([storeName], 'readonly');
+      const req = tx.objectStore(storeName).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  }
+</script>
+</body>
+</html>
