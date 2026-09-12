@@ -98,6 +98,8 @@ const AuraAuth = (() => {
     const errorMsg = document.getElementById('auth-error-msg');
     if (errorMsg) errorMsg.classList.add('hidden');
 
+    if (window._pinTimer) clearTimeout(window._pinTimer);
+
     if (key === 'clear') {
       enteredPin = '';
     } else if (key === 'submit') {
@@ -110,7 +112,7 @@ const AuraAuth = (() => {
     updatePinDots();
 
     if (enteredPin.length === 4) {
-      setTimeout(verifyPin, 150);
+      window._pinTimer = setTimeout(verifyPin, 150);
     }
   }
 
