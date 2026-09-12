@@ -90,7 +90,8 @@ const AuraUploader = (() => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      compressImage(e.target.result, 1400, 1400, 0.85, (compressedDataUrl) => {
+      // 700px max, 0.65 quality ≈ 200-400KB base64 — fits Firestore 1MB limit
+      compressImage(e.target.result, 700, 700, 0.65, (compressedDataUrl) => {
         selectedFileDataUrl = compressedDataUrl;
         displayPreview(compressedDataUrl);
       });
@@ -186,7 +187,7 @@ const AuraUploader = (() => {
 
       try {
         await AuraDB.savePhoto(photoObj);
-        await AuraDB.logSecurityEvent('MEDIA_UPLOADED', `Uploaded "${title}" [${category}] to Firebase & Vault`);
+        AuraDB.logSecurityEvent('MEDIA_UPLOADED', `Uploaded "${title}" [${category}]`).catch(() => {});
 
         const modal = document.getElementById('upload-modal');
         if (modal) modal.classList.add('hidden');
