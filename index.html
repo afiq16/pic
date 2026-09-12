@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA VAULT — Ultra-Secure Private Media & Control Center</title>
+  <meta name="description"
+    content="Ultra-secure military-grade private media vault with Firebase Cloud sync and Master Admin Control.">
+
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons Web Script -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+  <!-- Anti-Peek Privacy Shield (Blurs screen on browser tab switch) -->
+  <div id="tab-privacy-shield" class="tab-privacy-shield hidden">
+    <div class="shield-center-msg">
+      <i data-lucide="eye-off" class="icon-hero-lg"></i>
+      <h2>VAULT PROTECTED</h2>
+      <p>Content hidden while window is inactive</p>
+    </div>
+  </div>
+
+  <!-- Animated Particle Canvas Backdrop -->
+  <canvas id="particle-canvas" class="particle-canvas"></canvas>
+
+  <!-- Ambient Glowing Background Lights -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+  <div class="bg-grid-pattern"></div>
+
+  <!-- SECURITY AUTH GATE (Cyber Keypad Lock Screen) -->
+  <div id="auth-gate" class="auth-gate-overlay">
+    <div class="auth-card glass-panel glow-border">
+      <div class="auth-header text-center">
+        <div class="shield-badge pulsing-shield">
+          <i data-lucide="shield-alert" class="icon-hero"></i>
+        </div>
+        <h1 class="auth-title">AURA VAULT</h1>
+        <p class="auth-subtitle" id="auth-subtitle-text">Military-Grade Security • Enter Master Passcode</p>
+      </div>
+
+      <div class="auth-form text-center">
+        <!-- PIN Dots -->
+        <div class="pin-dots-container" id="pin-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+
+        <!-- Cyber Keypad -->
+        <div class="keypad-grid" id="keypad-grid">
+          <button class="key-btn" data-key="1">1</button>
+          <button class="key-btn" data-key="2">2</button>
+          <button class="key-btn" data-key="3">3</button>
+          <button class="key-btn" data-key="4">4</button>
+          <button class="key-btn" data-key="5">5</button>
+          <button class="key-btn" data-key="6">6</button>
+          <button class="key-btn" data-key="7">7</button>
+          <button class="key-btn" data-key="8">8</button>
+          <button class="key-btn" data-key="9">9</button>
+          <button class="key-btn key-action" data-key="clear" title="Clear Input"><i
+              data-lucide="rotate-ccw"></i></button>
+          <button class="key-btn" data-key="0">0</button>
+          <button class="key-btn key-action" data-key="submit" id="btn-unlock" title="Unlock Vault"><i
+              data-lucide="key-round"></i></button>
+        </div>
+
+        <!-- Lockout Warning / Error Message -->
+        <div id="auth-error-msg" class="auth-error hidden">
+          <i data-lucide="alert-triangle"></i> <span id="error-text">Access Denied: Invalid Security Key</span>
+        </div>
+
+        <!-- First Time Setup Notice -->
+        <div id="first-time-box" class="first-time-box hidden">
+          <p><i data-lucide="sparkles"></i> <strong>First-Time Setup:</strong> Create your Master Passcode now (4
+            Digits). Only you possess this key!</p>
+        </div>
+
+        <div class="auth-footer-info">
+          <button id="btn-set-custom-pass" class="btn-text-muted"><i data-lucide="lock" class="icon-sm"></i> Master
+            Passcode</button>
+          <button id="btn-decoy-info" class="btn-text-muted" title="Decoy Mode Info"><i data-lucide="eye-off"
+              class="icon-sm"></i> Decoy PIN: 1111</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION LAYOUT -->
+  <div id="app-container" class="app-container hidden">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="navbar glass-header">
+      <div class="nav-left">
+        <div class="brand-logo">
+          <div class="logo-icon pulsing-logo"><i data-lucide="shield-check"></i></div>
+          <div class="brand-text">
+            <span class="brand-title">AURA VAULT</span>
+            <span class="brand-badge" id="vault-mode-badge"><i data-lucide="wifi"></i> Firebase Live Sync Active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="nav-center">
+        <div class="search-box glass-input-group">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" id="search-input" placeholder="Search private photos, tags, secret notes..."
+            autocomplete="off">
+          <button id="clear-search" class="clear-btn hidden"><i data-lucide="x"></i></button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="nav-right">
+        <button id="btn-sound-toggle" class="btn-icon-glass" title="Toggle Cyber Sound FX">
+          <i data-lucide="volume-2" id="sound-icon"></i>
+        </button>
+
+        <button id="btn-slideshow" class="btn-icon-glass" title="Slideshow Presentation">
+          <i data-lucide="play"></i>
+        </button>
+
+        <button id="btn-open-upload" class="btn-primary glow-btn">
+          <i data-lucide="plus-circle"></i>
+          <span>Add Media</span>
+        </button>
+
+        <button id="btn-master-admin" class="btn-secondary glass-btn" title="Master Control Hub (Niyontron Panel)">
+          <i data-lucide="sliders"></i>
+          <span>Control Hub</span>
+        </button>
+
+        <button id="btn-cloud-config" class="btn-secondary glass-btn" title="Firebase Online Cloud Status">
+          <i data-lucide="database"></i>
+          <span class="cloud-status-dot active" id="cloud-status-dot"></span>
+        </button>
+
+        <button id="btn-security-logs" class="btn-secondary glass-btn" title="Security Audit Logs">
+          <i data-lucide="shield-alert"></i>
+        </button>
+
+        <button id="btn-panic-lock" class="btn-danger-glass" title="Emergency Lock Screen">
+          <i data-lucide="lock"></i>
+          <span>Lock</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ALBUM & CATEGORY FILTER BAR -->
+    <nav class="category-bar glass-bar">
+      <div class="category-scroll">
+        <button class="cat-pill active" data-category="all">
+          <i data-lucide="grid"></i> All Memories (<span id="count-all">0</span>)
+        </button>
+        <button class="cat-pill" data-category="favorites">
+          <i data-lucide="heart"></i> Favorites (<span id="count-favorites">0</span>)
+        </button>
+        <button class="cat-pill" data-category="family">
+          <i data-lucide="users"></i> Family & Circle (<span id="count-family">0</span>)
+        </button>
+        <button class="cat-pill" data-category="private">
+          <i data-lucide="shield"></i> Secret Vault (<span id="count-private">0</span>)
+        </button>
+        <button class="cat-pill" data-category="trips">
+          <i data-lucide="compass"></i> Travel & Trips (<span id="count-trips">0</span>)
+        </button>
+        <button class="cat-pill" data-category="notes">
+          <i data-lucide="file-text"></i> Secret Diary Notes (<span id="count-notes">0</span>)
+        </button>
+      </div>
+
+      <div class="sort-selector">
+        <label for="sort-select"><i data-lucide="arrow-up-down"></i> Sort:</label>
+        <select id="sort-select" class="glass-select">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="popular">Most Liked</option>
+          <option value="title">By Title</option>
+        </select>
+      </div>
+    </nav>
+
+    <!-- MAIN GALLERY SECTION -->
+    <main class="main-content">
+      <!-- Empty State Indicator -->
+      <div id="empty-state" class="empty-state glass-card hidden">
+        <div class="empty-icon"><i data-lucide="image"></i></div>
+        <h3>No Photos Found</h3>
+        <p>Your private vault is clean. Click "Add Media" to upload memories directly to your Firebase Online Cloud!</p>
+        <button class="btn-primary glow-btn" onclick="document.getElementById('btn-open-upload').click()">
+          <i data-lucide="upload-cloud"></i> Upload First Memory
+        </button>
+      </div>
+
+      <!-- Photo Grid -->
+      <div id="gallery-grid" class="gallery-grid">
+        <!-- Photo cards rendered dynamically -->
+      </div>
+    </main>
+
+    <!-- FOOTER STATS -->
+    <footer class="app-footer glass-footer">
+      <div class="footer-left">
+        <span class="status-indicator online"></span>
+        <span id="storage-type-label">Cloud Connected: <strong>ef-x-tour-2026 (Firebase Firestore &
+            RTDB)</strong></span>
+      </div>
+      <div class="footer-right">
+        <span id="session-timer-label"><i data-lucide="clock" class="icon-sm"></i> Auto-lock in 5:00</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- UPLOAD MEDIA MODAL -->
+  <div id="upload-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-modal glow-border max-w-xl">
+      <div class="modal-header">
+        <h2><i data-lucide="upload-cloud"></i> Add Private Media / Secret Note</h2>
+        <button class="modal-close-btn" id="close-upload-modal"><i data-lucide="x"></i></button>
+      </div>
+
+      <form id="upload-form" class="modal-body">
+        <!-- Drag & Drop Zone -->
+        <div id="drop-zone" class="drop-zone">
+          <input type="file" id="file-input" accept="image/*" class="file-hidden-input">
+          <div class="drop-content" id="drop-prompt">
+            <div class="drop-icon"><i data-lucide="image-plus"></i></div>
+            <p class="drop-text">Drag & drop photo here or <span class="browse-link">Browse files</span></p>
+            <span class="drop-subtext">PNG, JPG, WEBP, GIF (Auto compressed)</span>
+          </div>
+
+          <div class="drop-preview hidden" id="drop-preview-container">
+            <img id="preview-img" src="" alt="Upload Preview">
+            <button type="button" id="btn-remove-preview" class="btn-circle-danger"><i
+                data-lucide="trash-2"></i></button>
+          </div>
+        </div>
+
+        <!-- Filter Presets Studio -->
+        <div class="filter-presets-row">
+          <span class="filter-label"><i data-lucide="palette"></i> Photo Effect:</span>
+          <button type="button" class="filter-preset-btn active" data-filter="none">Original</button>
+          <button type="button" class="filter-preset-btn" data-filter="cyber">Cyberpunk</button>
+          <button type="button" class="filter-preset-btn" data-filter="noir">B&W Noir</button>
+          <button type="button" class="filter-preset-btn" data-filter="vintage">Warm Vintage</button>
+          <button type="button" class="filter-preset-btn" data-filter="hdr">Vivid HDR</button>
+        </div>
+
+        <div class="form-group">
+          <label for="media-title">Title / Headline *</label>
+          <input type="text" id="media-title" class="glass-input"
+            placeholder="e.g., Secret Hangout / Private Diary Entry" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="media-category">Album / Category</label>
+            <select id="media-category" class="glass-select">
+              <option value="family">Family & Circle</option>
+              <option value="favorites">Favorites</option>
+              <option value="trips">Travel & Trips</option>
+              <option value="private">Secret Vault (Strict Access)</option>
+              <option value="notes">Secret Diary Notes</option>
+            </select>
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="media-privacy">Privacy Tier</label>
+            <select id="media-privacy" class="glass-select">
+              <option value="circle">Authorized Circle Members</option>
+              <option value="only_me">Master Key Lock Only</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="media-caption">Secret Diary Note / Story</label>
+          <textarea id="media-caption" class="glass-textarea" rows="3"
+            placeholder="Write confidential notes, diary entries, or private memories..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="media-tags">Tags (Comma separated)</label>
+          <input type="text" id="media-tags" class="glass-input" placeholder="e.g. 2026, secret, diary, tour">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary glass-btn" id="btn-cancel-upload">Cancel</button>
+          <button type="submit" class="btn-primary glow-btn" id="btn-submit-upload">
+            <i data-lucide="cloud-upload"></i> Save & Sync to Firebase
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MASTER ADMIN CONTROL HUB (NIYONTRON PANEL) MODAL -->
+  <div id="admin-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-modal glow-border max-w-lg">
+      <div class="modal-header">
+        <h2><i data-lucide="sliders"></i> Master Control Hub (ওয়েবসাইট নিয়ন্ত্রণ)</h2>
+        <button class="modal-close-btn" id="close-admin-modal"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-desc">Configure security shields, privacy controls, auto-lock timeouts, and backup vault data.
+        </p>
+
+        <div class="form-group">
+          <label><i data-lucide="shield"></i> Anti-Peek Tab Shield:</label>
+          <div class="flex-row-between">
+            <span class="text-dim">Auto-blur vault when switching browser tabs</span>
+            <input type="checkbox" id="toggle-tab-shield" checked class="glass-checkbox">
+          </div>
+        </div>
+
+        <hr class="glass-divider">
+
+        <div class="form-group">
+          <label><i data-lucide="bar-chart-2"></i> Live Vault Analytics:</label>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: var(--radius-sm); margin-top: 8px;">
+            <div class="flex-row-between text-dim" style="font-size:0.85rem; margin-bottom: 6px;">
+              <span>Total Encrypted Memories:</span>
+              <strong id="admin-stat-total" style="color: var(--text-main);">0</strong>
+            </div>
+            <div class="flex-row-between text-dim" style="font-size:0.85rem; margin-bottom: 6px;">
+              <span>Secret Diary Notes:</span>
+              <strong id="admin-stat-notes" style="color: var(--text-main);">0</strong>
+            </div>
+            <div class="flex-row-between text-dim" style="font-size:0.85rem;">
+              <span>Total Approximate Storage:</span>
+              <strong id="admin-stat-size" style="color: var(--accent-cyan);">0 MB</strong>
+            </div>
+          </div>
+        </div>
+
+        <hr class="glass-divider">
+
+        <div class="form-group">
+          <label><i data-lucide="lock"></i> Anti-Inspect Protection:</label>
+          <div class="flex-row-between">
+            <span class="text-dim">Disable Right-Click menu on private photos</span>
+            <input type="checkbox" id="toggle-anti-inspect" checked class="glass-checkbox">
+          </div>
+        </div>
+
+        <hr class="glass-divider">
+
+        <div class="form-group">
+          <label for="select-autolock-time"><i data-lucide="clock"></i> Auto-Lock Inactivity Timeout:</label>
+          <select id="select-autolock-time" class="glass-select">
+            <option value="1">1 Minute (Strict)</option>
+            <option value="5" selected>5 Minutes (Standard)</option>
+            <option value="15">15 Minutes</option>
+            <option value="0">Never Lock</option>
+          </select>
+        </div>
+
+        <hr class="glass-divider">
+
+        <div class="form-group">
+          <label><i data-lucide="download"></i> Backup &amp; Vault Export:</label>
+          <div class="flex-gap-sm">
+            <button id="btn-export-vault" class="btn-secondary glass-btn-sm"><i data-lucide="download-cloud"></i> Export
+              Backup (.json)</button>
+            <button id="btn-purge-local" class="btn-danger-glass-sm"><i data-lucide="trash-2"></i> Wipe Local
+              Cache</button>
+          </div>
+        </div>
+
+        <hr class="glass-divider">
+
+        <!-- ACCESS INTELLIGENCE LOG -->
+        <div class="form-group">
+          <label style="display:flex; justify-content:space-between; align-items:center;">
+            <span><i data-lucide="radar"></i> Access Intelligence Log:</span>
+            <button id="btn-clear-logs" style="font-size:0.75rem; background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3); color: var(--accent-rose); padding: 3px 10px; border-radius: var(--radius-full); cursor:pointer;">
+              <i data-lucide="trash-2"></i> Clear Logs
+            </button>
+          </label>
+          <div id="access-log-container" style="max-height: 340px; overflow-y: auto; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.4) transparent;">
+            <p id="access-log-empty" style="text-align:center; color: var(--text-dim); font-size:0.85rem; padding: 20px 0;">
+              <i data-lucide="inbox"></i><br>No access logs yet. Logs will appear after your next unlock.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-primary glow-btn" id="btn-save-admin">Save Master Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDESHOW PRESENTATION OVERLAY -->
+  <div id="slideshow-overlay" class="modal-overlay hidden">
+    <div class="slideshow-container">
+      <button id="close-slideshow" class="modal-close-btn slideshow-close"><i data-lucide="x"></i></button>
+      <div class="slideshow-stage">
+        <img id="slideshow-img" src="" alt="Slideshow image">
+        <div id="slideshow-text-note" class="hidden" style="width: 80%; height: 60%; display: flex; align-items: center; justify-content: center; padding: 40px; text-align: center; font-size: 2.5rem; color: #fff; background: rgba(139, 92, 246, 0.15); border: 1px solid var(--accent-violet); border-radius: var(--radius-lg);"></div>
+        <div class="slideshow-caption-box">
+          <h3 id="slideshow-title">Title</h3>
+          <p id="slideshow-desc">Description</p>
+        </div>
+      </div>
+      <div class="slideshow-nav">
+        <button id="ss-prev" class="ctrl-btn"><i data-lucide="chevron-left"></i></button>
+        <button id="ss-playpause" class="ctrl-btn"><i data-lucide="pause"></i></button>
+        <button id="ss-next" class="ctrl-btn"><i data-lucide="chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX PHOTO VIEWER MODAL -->
+  <div id="lightbox-modal" class="modal-overlay hidden">
+    <div class="lightbox-content glass-lightbox glow-border">
+      <button class="modal-close-btn lightbox-close" id="close-lightbox"><i data-lucide="x"></i></button>
+
+      <div class="lightbox-grid">
+        <div class="lightbox-viewport">
+          <div class="image-stage">
+            <img id="lightbox-img" src="" alt="Enlarged photo">
+            <div id="lightbox-text-note" class="hidden" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 40px; text-align: center; font-size: 1.5rem; color: #fff; background: rgba(0,0,0,0.5); border-radius: var(--radius-md);"></div>
+          </div>
+          <div class="lightbox-image-controls">
+            <button id="btn-zoom-in" class="ctrl-btn" title="Zoom In"><i data-lucide="zoom-in"></i></button>
+            <button id="btn-zoom-out" class="ctrl-btn" title="Zoom Out"><i data-lucide="zoom-out"></i></button>
+            <button id="btn-rotate" class="ctrl-btn" title="Rotate"><i data-lucide="rotate-cw"></i></button>
+            <button id="btn-download" class="ctrl-btn" title="Download High-Res"><i data-lucide="download"></i></button>
+            <button id="btn-delete-photo" class="ctrl-btn danger" title="Purge Media"><i
+                data-lucide="trash-2"></i></button>
+          </div>
+        </div>
+
+        <div class="lightbox-sidebar">
+          <div class="sidebar-header">
+            <div class="author-badge">
+              <div class="avatar"><i data-lucide="user-check"></i></div>
+              <div>
+                <h4 id="lb-title">Photo Title</h4>
+                <span id="lb-date" class="meta-date">Sep 11, 2026</span>
+              </div>
+            </div>
+            <span id="lb-privacy-tag" class="privacy-badge">Circle</span>
+          </div>
+
+          <div class="sidebar-body">
+            <p id="lb-caption" class="photo-caption">Photo caption text goes here...</p>
+            <div id="lb-tags-list" class="tags-container"></div>
+
+            <hr class="glass-divider">
+
+            <div class="reactions-bar">
+              <button class="rx-pill" data-rx="love"><span class="rx-emoji">❤️</span> <span
+                  id="rx-love-count">0</span></button>
+              <button class="rx-pill" data-rx="fire"><span class="rx-emoji">🔥</span> <span
+                  id="rx-fire-count">0</span></button>
+              <button class="rx-pill" data-rx="sparkles"><span class="rx-emoji">✨</span> <span
+                  id="rx-sparkles-count">0</span></button>
+              <button class="rx-pill" data-rx="vault"><span class="rx-emoji">🔒</span> <span
+                  id="rx-vault-count">0</span></button>
+            </div>
+
+            <hr class="glass-divider">
+
+            <div class="comments-section">
+              <h5><i data-lucide="message-square" class="icon-sm"></i> Private Comments</h5>
+              <div id="comments-list" class="comments-list">
+                <!-- Comments rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <form id="comment-form" class="comment-input-row">
+              <input type="text" id="comment-author" class="glass-input author-input" placeholder="Your Name"
+                value="Member" required>
+              <input type="text" id="comment-text" class="glass-input text-input" placeholder="Write a comment..."
+                required>
+              <button type="submit" class="btn-primary glow-btn-sm"><i data-lucide="send"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLOUD CONFIG MODAL -->
+  <div id="cloud-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-modal glow-border max-w-lg">
+      <div class="modal-header">
+        <h2><i data-lucide="database"></i> Firebase Cloud Connection Status</h2>
+        <button class="modal-close-btn" id="close-cloud-modal"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="cloud-status-box active-status" id="cloud-sync-status-box">
+          <i data-lucide="check-circle-2" class="status-icon-emerald"></i>
+          <div>
+            <strong>Firebase Project Connected Live:</strong><br>
+            Project ID: <code id="active-project-id">ef-x-tour-2026</code><br>
+            Realtime DB & Firestore: Active and Broadcasting
+          </div>
+        </div>
+
+        <div class="tab-buttons">
+          <button class="tab-btn active" id="tab-firebase">Firebase Project Credentials</button>
+        </div>
+
+        <div id="firebase-config" class="config-tab-content">
+          <div class="form-group">
+            <label for="fb-api-key">Firebase API Key</label>
+            <input type="text" id="fb-api-key" class="glass-input" value="AIzaSyDTZEY4NQpcRKbU7vZd-2Wy8H0mUbBHiJ0">
+          </div>
+          <div class="form-group">
+            <label for="fb-project-id">Firebase Project ID</label>
+            <input type="text" id="fb-project-id" class="glass-input" value="ef-x-tour-2026">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary glass-btn" id="btn-test-cloud">Test Connection</button>
+        <button class="btn-primary glow-btn" id="btn-save-cloud">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECURITY AUDIT LOG MODAL -->
+  <div id="security-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-modal glow-border max-w-lg">
+      <div class="modal-header">
+        <h2><i data-lucide="shield-alert"></i> Security Audit & Anti-Hack Logs</h2>
+        <button class="modal-close-btn" id="close-security-modal"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-desc">Real-time log of security events, passcode unlocks, failed access attempts, and media
+          purges.</p>
+        <div id="security-logs-container" class="logs-container glass-inset">
+          <!-- Security logs rendered dynamically -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-danger-glass" id="btn-clear-logs">Clear Log History</button>
+        <button class="btn-secondary glass-btn" id="btn-close-security">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Sound Effects Engine -->
+  <script src="js/sound.js"></script>
+  <!-- Particle Background -->
+  <script src="js/particles.js"></script>
+  <!-- App Scripts -->
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/uploader.js"></script>
+  <script src="js/gallery.js"></script>
+  <script src="js/slideshow.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+
+</html>
