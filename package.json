@@ -1,0 +1,6 @@
+{
+  "name": "aura-vault-private",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Ultra-secure private media vault with Firebase cloud sync"
+}
