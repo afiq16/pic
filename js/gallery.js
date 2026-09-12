@@ -70,7 +70,7 @@ const AuraGallery = (() => {
     const emptyState = document.getElementById('empty-state');
     if (!grid) return;
 
-    const allPhotos = await AuraDB.getAllPhotos();
+    let allPhotos = await AuraDB.getAllPhotos();
     updateCategoryCounts(allPhotos);
 
     // Filter by decoy
