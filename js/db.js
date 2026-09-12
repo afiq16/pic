@@ -81,12 +81,12 @@ const AuraDB = (() => {
 
       request.onsuccess = (e) => {
         dbInstance = e.target.result;
-        seedInitialDataIfNeeded().then(resolve);
+        seedInitialDataIfNeeded().then(resolve).catch(resolve);
       };
 
       request.onerror = (e) => {
         console.error('IndexedDB Error:', e.target.error);
-        reject(e.target.error);
+        resolve(); // Resolve anyway so Auth doesn't break
       };
     });
   }
