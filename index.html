@@ -133,8 +133,8 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="nav-right">
+      <!-- Action Buttons (Desktop) -->
+      <div class="nav-right" id="nav-right-desktop">
         <button id="btn-sound-toggle" class="btn-icon-glass" title="Toggle Cyber Sound FX">
           <i data-lucide="volume-2" id="sound-icon"></i>
         </button>
@@ -145,12 +145,12 @@
 
         <button id="btn-open-upload" class="btn-primary glow-btn">
           <i data-lucide="plus-circle"></i>
-          <span>Add Media</span>
+          <span class="btn-label">Add Media</span>
         </button>
 
-        <button id="btn-master-admin" class="btn-secondary glass-btn" title="Master Control Hub (Niyontron Panel)">
+        <button id="btn-master-admin" class="btn-secondary glass-btn" title="Master Control Hub">
           <i data-lucide="sliders"></i>
-          <span>Control Hub</span>
+          <span class="btn-label">Control Hub</span>
         </button>
 
         <button id="btn-cloud-config" class="btn-secondary glass-btn" title="Firebase Online Cloud Status">
@@ -158,16 +158,60 @@
           <span class="cloud-status-dot active" id="cloud-status-dot"></span>
         </button>
 
-        <button id="btn-security-logs" class="btn-secondary glass-btn" title="Security Audit Logs">
+        <button id="btn-security-logs" class="btn-icon-glass" title="Security Audit Logs">
           <i data-lucide="shield-alert"></i>
         </button>
 
         <button id="btn-panic-lock" class="btn-danger-glass" title="Emergency Lock Screen">
           <i data-lucide="lock"></i>
-          <span>Lock</span>
+          <span class="btn-label">Lock</span>
+        </button>
+      </div>
+
+      <!-- Mobile action row -->
+      <div class="nav-mobile-actions">
+        <button id="btn-open-upload-mob" class="btn-primary glow-btn mob-upload-btn">
+          <i data-lucide="plus-circle"></i>
+        </button>
+        <button id="btn-panic-lock-mob" class="btn-danger-glass mob-lock-btn">
+          <i data-lucide="lock"></i>
+        </button>
+        <button id="btn-hamburger" class="btn-icon-glass" aria-label="Menu">
+          <i data-lucide="menu"></i>
         </button>
       </div>
     </header>
+
+    <!-- Mobile Slide-Down Menu -->
+    <div id="mobile-menu" class="mobile-menu hidden">
+      <button id="mob-search-toggle" class="mob-menu-item">
+        <i data-lucide="search"></i> Search
+      </button>
+      <button id="mob-btn-sound" class="mob-menu-item">
+        <i data-lucide="volume-2"></i> Sound FX
+      </button>
+      <button id="mob-btn-slideshow" class="mob-menu-item">
+        <i data-lucide="play"></i> Slideshow
+      </button>
+      <button id="mob-btn-admin" class="mob-menu-item">
+        <i data-lucide="sliders"></i> Control Hub
+      </button>
+      <button id="mob-btn-cloud" class="mob-menu-item">
+        <i data-lucide="database"></i> Cloud Config
+      </button>
+      <button id="mob-btn-security" class="mob-menu-item">
+        <i data-lucide="shield-alert"></i> Security Logs
+      </button>
+    </div>
+
+    <!-- Mobile Search Bar (hidden by default) -->
+    <div id="mobile-search-bar" class="mobile-search-bar hidden">
+      <div class="search-box glass-input-group">
+        <i data-lucide="search" class="search-icon"></i>
+        <input type="text" id="search-input-mob" placeholder="Search..." autocomplete="off">
+        <button id="clear-search-mob" class="clear-btn hidden"><i data-lucide="x"></i></button>
+      </div>
+    </div>
 
     <!-- ALBUM & CATEGORY FILTER BAR -->
     <nav class="category-bar glass-bar">
