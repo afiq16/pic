@@ -37,24 +37,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Setup Top Navbar Actions
 function setupNavbarActions() {
-  const uploadBtn = document.getElementById('btn-open-upload');
-  const panicBtn = document.getElementById('btn-panic-lock');
-  const soundBtn = document.getElementById('btn-sound-toggle');
-  const soundIcon = document.getElementById('sound-icon');
-  const uploadModal = document.getElementById('upload-modal');
+  const uploadBtn    = document.getElementById('btn-open-upload');
+  const panicBtn     = document.getElementById('btn-panic-lock');
+  const soundBtn     = document.getElementById('btn-sound-toggle');
+  const soundIcon    = document.getElementById('sound-icon');
+  const uploadModal  = document.getElementById('upload-modal');
 
+  // Desktop upload
   if (uploadBtn && uploadModal) {
-    uploadBtn.addEventListener('click', () => {
-      uploadModal.classList.remove('hidden');
-    });
+    uploadBtn.addEventListener('click', () => uploadModal.classList.remove('hidden'));
   }
 
+  // Desktop lock
   if (panicBtn) {
-    panicBtn.addEventListener('click', () => {
-      AuraAuth.lockVault();
-    });
+    panicBtn.addEventListener('click', () => AuraAuth.lockVault());
   }
 
+  // Desktop sound
   if (soundBtn && soundIcon) {
     soundBtn.addEventListener('click', () => {
       if (window.AuraSound) {
@@ -62,6 +61,112 @@ function setupNavbarActions() {
         soundIcon.setAttribute('data-lucide', enabled ? 'volume-2' : 'volume-x');
         if (window.lucide) lucide.createIcons();
       }
+    });
+  }
+
+  // ---- Mobile Menu ----
+  const hamburger    = document.getElementById('btn-hamburger');
+  const mobileMenu   = document.getElementById('mobile-menu');
+  const mobUpload    = document.getElementById('btn-open-upload-mob');
+  const mobLock      = document.getElementById('btn-panic-lock-mob');
+  const mobSearch    = document.getElementById('mob-search-toggle');
+  const mobSearchBar = document.getElementById('mobile-search-bar');
+  const mobSearchInp = document.getElementById('search-input-mob');
+  const mainSearchInp= document.getElementById('search-input');
+  const mobSound     = document.getElementById('mob-btn-sound');
+  const mobSlide     = document.getElementById('mob-btn-slideshow');
+  const mobAdmin     = document.getElementById('mob-btn-admin');
+  const mobCloud     = document.getElementById('mob-btn-cloud');
+  const mobSecurity  = document.getElementById('mob-btn-security');
+
+  function closeMobileMenu() {
+    if (mobileMenu) mobileMenu.classList.add('hidden');
+  }
+
+  if (hamburger && mobileMenu) {
+    hamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      mobileMenu.classList.toggle('hidden');
+    });
+  }
+
+  // Close menu on outside click
+  document.addEventListener('click', (e) => {
+    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+      if (!mobileMenu.contains(e.target) && e.target !== hamburger) {
+        closeMobileMenu();
+      }
+    }
+  });
+
+  // Mobile Upload
+  if (mobUpload && uploadModal) {
+    mobUpload.addEventListener('click', () => uploadModal.classList.remove('hidden'));
+  }
+
+  // Mobile Lock
+  if (mobLock) {
+    mobLock.addEventListener('click', () => AuraAuth.lockVault());
+  }
+
+  // Mobile Search toggle
+  if (mobSearch && mobSearchBar) {
+    mobSearch.addEventListener('click', () => {
+      closeMobileMenu();
+      mobSearchBar.classList.toggle('hidden');
+      if (!mobSearchBar.classList.contains('hidden')) mobSearchInp.focus();
+    });
+  }
+
+  // Sync mobile search → main search
+  if (mobSearchInp && mainSearchInp) {
+    mobSearchInp.addEventListener('input', () => {
+      mainSearchInp.value = mobSearchInp.value;
+      mainSearchInp.dispatchEvent(new Event('input'));
+    });
+  }
+
+  // Mobile sound
+  if (mobSound) {
+    mobSound.addEventListener('click', () => {
+      closeMobileMenu();
+      if (window.AuraSound) {
+        const enabled = AuraSound.toggleSound();
+        if (soundIcon) soundIcon.setAttribute('data-lucide', enabled ? 'volume-2' : 'volume-x');
+        if (window.lucide) lucide.createIcons();
+      }
+    });
+  }
+
+  // Mobile slideshow
+  if (mobSlide) {
+    mobSlide.addEventListener('click', () => {
+      closeMobileMenu();
+      document.getElementById('btn-slideshow')?.click();
+    });
+  }
+
+  // Mobile admin
+  if (mobAdmin) {
+    mobAdmin.addEventListener('click', () => {
+      closeMobileMenu();
+      document.getElementById('btn-master-admin')?.click();
+    });
+  }
+
+  // Mobile cloud
+  if (mobCloud) {
+    mobCloud.addEventListener('click', () => {
+      closeMobileMenu();
+      document.getElementById('btn-cloud-config')?.click();
+    });
+  }
+
+  // Mobile security
+  if (mobSecurity) {
+    mobSecurity.addEventListener('click', () => {
+      closeMobileMenu();
+      document.getElementById('btn-security-logs')?.click();
     });
   }
 }
