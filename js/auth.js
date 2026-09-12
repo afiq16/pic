@@ -128,25 +128,25 @@ const AuraAuth = (() => {
   function verifyPin() {
     const masterPin = getMasterPin();
 
-    // First time setup check
+    // ---- First Time Setup ----
     if (!masterPin) {
       if (enteredPin.length === 4) {
         localStorage.setItem('aura_master_pin', enteredPin);
-        alert(`Master Passcode created! Your secret PIN is [ ${enteredPin} ]. Keep it safe!`);
-        AuraDB.logSecurityEvent('MASTER_PIN_CREATED', 'Initial Master passcode established');
+        AuraDB.logSecurityEvent('MASTER_PIN_CREATED', 'Initial Master passcode established').catch(() => {});
         checkFirstTimeSetup();
         unlockVault(false);
         enteredPin = '';
         updatePinDots();
         return;
       }
+      return;
     }
 
     // Decoy Mode Activation
     if (enteredPin === DECOY_PIN) {
       if (window.AuraSound) AuraSound.playUnlockSuccess();
       isDecoyMode = true;
-      AuraDB.logSecurityEvent('DECOY_MODE_ACTIVATED', 'Decoy vault unlocked via fake PIN');
+      AuraDB.logSecurityEvent('DECOY_MODE_ACTIVATED', 'Decoy vault unlocked via fake PIN').catch(() => {});
       unlockVault(true);
       enteredPin = '';
       updatePinDots();
@@ -158,7 +158,7 @@ const AuraAuth = (() => {
       if (window.AuraSound) AuraSound.playUnlockSuccess();
       isDecoyMode = false;
       failedAttempts = 0;
-      AuraDB.logSecurityEvent('VAULT_UNLOCKED', 'Master vault successfully unlocked');
+      AuraDB.logSecurityEvent('VAULT_UNLOCKED', 'Master vault successfully unlocked').catch(() => {});
       unlockVault(false);
       enteredPin = '';
       updatePinDots();
@@ -166,7 +166,7 @@ const AuraAuth = (() => {
       // Failed attempt
       if (window.AuraSound) AuraSound.playAccessDenied();
       failedAttempts++;
-      AuraDB.logSecurityEvent('FAILED_UNLOCK', `Failed attempt #${failedAttempts} with PIN (${enteredPin})`);
+      AuraDB.logSecurityEvent('FAILED_UNLOCK', `Failed attempt #${failedAttempts}`).catch(() => {});
 
       enteredPin = '';
       updatePinDots();
@@ -204,11 +204,11 @@ const AuraAuth = (() => {
   }
 
   function unlockVault(decoy) {
-    const authGate = document.getElementById('auth-gate');
-    const appContainer = document.getElementById('app-container');
-    const badge = document.getElementById('vault-mode-badge');
+    const authGate    = document.getElementById('auth-gate');
+    const appContainer= document.getElementById('app-container');
+    const badge       = document.getElementById('vault-mode-badge');
 
-    if (authGate) authGate.classList.add('hidden');
+    if (authGate)     authGate.classList.add('hidden');
     if (appContainer) appContainer.classList.remove('hidden');
 
     if (badge) {
@@ -227,19 +227,24 @@ const AuraAuth = (() => {
       window.confetti({ particleCount: 60, spread: 70, origin: { y: 0.8 } });
     }
 
+    if (window.lucide) lucide.createIcons();
     if (window.AuraGallery) AuraGallery.render();
   }
 
   function lockVault() {
-    const authGate = document.getElementById('auth-gate');
+    const authGate     = document.getElementById('auth-gate');
     const appContainer = document.getElementById('app-container');
 
     if (appContainer) appContainer.classList.add('hidden');
-    if (authGate) authGate.classList.remove('hidden');
+    if (authGate)     authGate.classList.remove('hidden');
 
+    clearTimeout(sessionTimeoutTimer);
     enteredPin = '';
     updatePinDots();
-    AuraDB.logSecurityEvent('VAULT_LOCKED', 'Vault locked manually');
+    const errMsg = document.getElementById('auth-error-msg');
+    if (errMsg) errMsg.classList.add('hidden');
+
+    AuraDB.logSecurityEvent('VAULT_LOCKED', 'Vault locked').catch(() => {});
   }
 
   function setupInactivityTimer() {
@@ -263,7 +268,7 @@ const AuraAuth = (() => {
       const appContainer = document.getElementById('app-container');
       if (appContainer && !appContainer.classList.contains('hidden')) {
         lockVault();
-        AuraDB.logSecurityEvent('SESSION_TIMEOUT', `Vault locked automatically due to ${mins} minutes inactivity`);
+        AuraDB.logSecurityEvent('SESSION_TIMEOUT', `Auto-lock after ${mins} min inactivity`).catch(() => {});
       }
     }, timeoutMs);
   }
