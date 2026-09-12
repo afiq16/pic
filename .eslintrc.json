@@ -1,0 +1,26 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "module"
+  },
+  "globals": {
+    "AuraDB": "readonly",
+    "AuraAuth": "readonly",
+    "AuraAdmin": "readonly",
+    "AuraUploader": "readonly",
+    "AuraGallery": "readonly",
+    "AuraSlideshow": "readonly",
+    "AuraSound": "readonly",
+    "firebase": "readonly",
+    "confetti": "readonly",
+    "lucide": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": ["error", { "varsIgnorePattern": "^Aura(DB|Auth|Admin|Uploader|Gallery|Slideshow|Sound)$" }]
+  }
+}
