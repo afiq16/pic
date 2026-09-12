@@ -98,7 +98,7 @@ const AuraDB = (() => {
       for (const item of initialSeeds) {
         await savePhoto(item);
       }
-      await logSecurityEvent('DATABASE_INITIALIZED', 'Initial encrypted vault database loaded with demo memories');
+      logSecurityEvent('DATABASE_INITIALIZED', 'Vault database initialized').catch(() => {});
     }
   }
 
@@ -292,7 +292,7 @@ const AuraDB = (() => {
           firebaseInstance = firebase.firestore();
           logSecurityEvent('FIREBASE_CONNECTED', `Connected to Firebase project: ${config.projectId}`);
 
-          // Listen for real-time remote updates
+          // Listen for real-time remote updates from Firestore
           firebaseInstance.collection('photos').onSnapshot((snapshot) => {
             snapshot.docChanges().forEach((change) => {
               if (change.type === 'added' || change.type === 'modified') {
@@ -302,6 +302,9 @@ const AuraDB = (() => {
             });
             if (window.AuraGallery) AuraGallery.render();
           }, (err) => console.log('Firestore listener info:', err.message));
+
+          // After connecting, push any locally-only photos to Firestore
+          setTimeout(() => syncAllLocalPhotosToCloud(), 2000);
         } catch (e) {
           console.log('Firestore init fallback:', e);
         }
@@ -325,6 +328,24 @@ const AuraDB = (() => {
       } catch (err) {
         console.error('Firebase init error:', err);
       }
+    }
+  }
+
+  // Sync all locally stored photos up to Firestore (for first-time + seed sync)
+  async function syncAllLocalPhotosToCloud() {
+    if (!firebaseInstance) return;
+    try {
+      const localPhotos = await getAllPhotos();
+      for (const photo of localPhotos) {
+        try {
+          await firebaseInstance.collection('photos').doc(photo.id).set(photo);
+        } catch (e) {
+          console.log('Batch sync skip:', photo.id, e.message);
+        }
+      }
+      if (window.AuraGallery) AuraGallery.render();
+    } catch (e) {
+      console.log('Batch sync error:', e);
     }
   }
 
