@@ -5,7 +5,7 @@
 
 const AuraDB = (() => {
   const DB_NAME = 'AuraVaultDB';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;  // Bumped: forces onupgradeneeded to add missing stores
   let dbInstance = null;
 
   // Initial Sample Media Seeds for first launch
@@ -212,6 +212,8 @@ const AuraDB = (() => {
   // Security Audit Logging — enhanced with device & location
   async function logSecurityEvent(type, message) {
     if (!dbInstance) return;
+    // Guard: if 'logs' store doesn't exist yet, skip silently
+    if (!dbInstance.objectStoreNames.contains('logs')) return;
 
     const di = getDeviceInfo();
     const loc = await getLocationInfo();
@@ -238,6 +240,7 @@ const AuraDB = (() => {
       const store = tx.objectStore('logs');
       store.add(entry);
       tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve(); // Never reject
     });
   }
 
